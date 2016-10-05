@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gigawattio/go-commons/pkg/oslib"
 )
 
@@ -52,13 +53,13 @@ func DiskBasedAssetProvider(basePath string) AssetProvider {
 		filepath := basePath + "/" + name
 		exists, err := oslib.PathExists(filepath)
 		if err != nil {
-			log.Error("error checking if filepath=%s exists: %s", filepath, err)
+			log.Errorf("error checking if filepath=%s exists: %s", filepath, err)
 			return nil, err
 		}
 		if exists {
 			data, err := ioutil.ReadFile(filepath)
 			if err != nil {
-				log.Error("error reading filepath=%s: %s", filepath, err)
+				log.Errorf("error reading filepath=%s: %s", filepath, err)
 				return nil, err
 			}
 			return data, nil

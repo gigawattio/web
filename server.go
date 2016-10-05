@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gigawattio/go-commons/pkg/errorlib"
 	"github.com/jaytaylor/stoppableListener"
 )
@@ -97,7 +98,7 @@ func (ws *WebServer) Start() error {
 	}
 	go func() {
 		if err := ws.server.Serve(ws.listener); err != nil && err.Error() != listenerStoppedMessage {
-			log.Info("web.WebServer: error on ws with Options=%+v: %s", ws.Options, err)
+			log.Infof("web.WebServer: error on ws with Options=%+v: %s", ws.Options, err)
 		}
 		// log.Info("Server done!")
 	}()
@@ -161,9 +162,9 @@ func (ws *WebServer) BaseUrl() string {
 // StaticHandlerFunc generates a handler which always serves up the same thing
 // regardless of the request.
 func StaticHandlerFunc(content []byte, statusCode int, headers map[string]string) http.HandlerFunc {
-	log.Info("Creating new static handler func with headers=%+v and content=%s", headers, string(content))
+	log.Infof("Creating new static handler func with headers=%+v and content=%s", headers, string(content))
 	handlerFn := func(w http.ResponseWriter, req *http.Request) {
-		log.Info("In the static handler where headers=%+v and content=%s", headers, string(content))
+		log.Infof("In the static handler where headers=%+v and content=%s", headers, string(content))
 		for k, v := range headers {
 			w.Header().Set(k, v)
 		}

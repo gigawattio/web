@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	// log "github.com/Sirupsen/logrus"
-	// "github.com/facebookgo/stack"
+	log "github.com/Sirupsen/logrus"
+	"github.com/facebookgo/stack"
 	"github.com/gigawattio/go-commons/pkg/errorlib"
 	"github.com/gigawattio/go-commons/pkg/web"
 	"github.com/gigawattio/go-commons/pkg/web/helper"
@@ -43,9 +43,7 @@ func GenericObjectEndpoint(w http.ResponseWriter, req *http.Request, processorFu
 		} else {
 			status = http.StatusInternalServerError
 		}
-		// stack.Caller(skip)
-		// log.E
-		logX.Error("X3 error running object processor on URI=%v status-code=%v: %s", req.RequestURI, status, err)
+		log.Errorf("%v: error running object processor on URI=%v status-code=%v: %s", stack.Caller(3), req.RequestURI, status, err)
 		web.RespondWithJson(w, status, web.JsonError(err))
 		return
 	}
@@ -78,7 +76,7 @@ func GenericObjectsEndpoint(w http.ResponseWriter, req *http.Request, processorF
 		} else {
 			status = http.StatusInternalServerError
 		}
-		logX.Error("error running listing processor for URI=%v limit=%v offset=%v: %s", req.RequestURI, limit, offset, err)
+		log.Errorf("%v: error running listing processor for URI=%v limit=%v offset=%v: %s", stack.Caller(3), req.RequestURI, limit, offset, err)
 		web.RespondWithJson(w, status, web.JsonError(err))
 		return
 	}

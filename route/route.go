@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/nbio/hitch"
 )
 
@@ -32,7 +33,7 @@ func (rmb *RouteMiddlewareBundle) Activate() *hitch.Hitch {
 		for _, method := range strings.Split(routeDatum.Reciever, "|") {
 			receiverFunc := rmb.lookupReceiver(h, method)
 			receiverFunc(routeDatum.Path, http.HandlerFunc(routeDatum.HandlerFunc))
-			// log.Info("route: registered method=%s path=%s", method, routeDatum.Path)
+			log.Debugf("route: registered method=%s path=%s", method, routeDatum.Path)
 		}
 	}
 	return h

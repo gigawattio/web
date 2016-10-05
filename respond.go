@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // TODO(jet) Add some form of logging control or toggle to this package,
@@ -123,7 +125,7 @@ func RespondWithText(w http.ResponseWriter, statusCode int, data interface{}) (i
 
 func interceptErrors(statusCode int, err error) (int, error) {
 	if err != nil {
-		log.Error("Intercepted low-level HTTP response error during transmission: %s", err)
+		log.Errorf("Intercepted low-level HTTP response error during transmission: %s", err)
 	}
 	return statusCode, err
 }

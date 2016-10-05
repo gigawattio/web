@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/nbio/hitch"
 )
 
@@ -20,7 +21,7 @@ func Int64ContextParam(name string, req *http.Request) (int64, error) {
 	paramString := hitch.Params(req).ByName(name)
 	value, err := strconv.ParseInt(paramString, 10, 64)
 	if err != nil {
-		log.Info("Failed to parse paramString=%s into an int64: %s", paramString, err)
+		log.Infof("Failed to parse paramString=%s into an int64: %s", paramString, err)
 		return 0, fmt.Errorf("param lookup of '%v': %s", name, err)
 	}
 	return value, nil

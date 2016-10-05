@@ -2,6 +2,9 @@ package web
 
 import (
 	"fmt"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/facebookgo/stack"
 )
 
 func JsonError(detail interface{}) Json {
@@ -12,9 +15,7 @@ func JsonError(detail interface{}) Json {
 	default:
 		detail = fmt.Sprint(detail)
 	}
-	log.ExtraCalldepth = 1
-	log.Error("JsonError: detail=%v\n", detail)
-	log.ExtraCalldepth = 0
+	log.Errorf("%v: JsonError: detail=%v\n", stack.Caller(1), detail)
 	return Json{"error": detail}
 }
 
