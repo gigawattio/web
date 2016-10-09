@@ -135,7 +135,8 @@ func (ws *WebServer) Addr() net.Addr {
 	if ws.listener == nil {
 		return &net.IPAddr{}
 	}
-	return ws.listener.Addr()
+	addr := ws.listener.Addr()
+	return addr
 }
 
 // waitUntilStopped uses netcat (nc) to determine if the listening port is
