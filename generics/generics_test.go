@@ -8,6 +8,7 @@ import (
 
 	"github.com/gigawattio/go-commons/pkg/web"
 	"github.com/gigawattio/go-commons/pkg/web/route"
+
 	"github.com/nbio/hitch"
 	"github.com/parnurzeal/gorequest"
 )
