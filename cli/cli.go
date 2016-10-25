@@ -203,12 +203,6 @@ func (cli *Cli) RunWeb(ctx *cliv2.Context) error {
 	return nil
 }
 
-func (cli *Cli) errorExit(err error, statusCode int) {
-	fmt.Fprintf(cli.App.ErrWriter, "error: %s\n", err)
-	fmt.Fprintf(cli.App.ErrWriter, "exiting with status-code=%v\n", statusCode)
-	os.Exit(statusCode)
-}
-
 func (cli *Cli) Main() error {
 	// Temporarily disable cliv2 os exiter and redirect ErrWriter to the one for
 	// this app.
@@ -226,10 +220,16 @@ func (cli *Cli) Main() error {
 
 	if err := cli.App.Run(cli.Args); err != nil {
 		if cli.ExitOnError {
-			cli.errorExit(err, 1)
+			ErrorExit(cli.App.ErrWriter, err, 1)
 		} else {
 			return err
 		}
 	}
 	return nil
+}
+
+func ErrorExit(w io.Writer, err error, statusCode int) {
+	fmt.Fprintf(w, "error: %s\n", err)
+	fmt.Fprintf(w, "exiting with status-code=%v\n", statusCode)
+	os.Exit(statusCode)
 }
