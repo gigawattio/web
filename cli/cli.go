@@ -22,44 +22,43 @@ var (
 
 // Options provider for Cli struct.
 type Options struct {
-	AppName     string
-	Usage       string
-	Version     string
-	WebService  interfaces.WebService
-	Stdout      io.Writer
-	Stderr      io.Writer
-	Args        []string
-	Flags       []cliv2.Flag
-	ExitOnError bool // Exit on non-nil error during invocation of `Main()`.
+	AppName            string
+	Usage              string
+	Version            string
+	Flags              []cliv2.Flag
+	Stdout             io.Writer
+	Stderr             io.Writer
+	WebServiceProvider interfaces.WebServiceProvider
+	Args               []string
+	ExitOnError        bool // Exit on non-nil error during invocation of `Main()`.
 }
 
 // Cli provides a command-line-interface in-a-box for web-services.
 type Cli struct {
-	App         *cliv2.App
-	WebService  interfaces.WebService
-	Stdout      io.Writer
-	Stderr      io.Writer
-	Args        []string
-	Install     bool   // NB: Flag variable.
-	Uninstall   bool   // NB: Flag variable.
-	ServiceUser string // NB: Flag variable.
-	BindAddr    string // NB: Flag variable.
-	ExitOnError bool
-	initialized bool
+	App                *cliv2.App
+	WebServiceProvider interfaces.WebServiceProvider
+	Args               []string
+	Install            bool   // NB: Flag variable.
+	Uninstall          bool   // NB: Flag variable.
+	ServiceUser        string // NB: Flag variable.
+	BindAddr           string // NB: Flag variable.
+	ExitOnError        bool   // true triggers os.exit upon error from Main().
+	initialized        bool
 }
 
 func New(options Options) (*Cli, error) {
 	cli := &Cli{
 		App: &cliv2.App{
-			Name:    options.AppName,
-			Version: options.Version,
-			Usage:   options.Usage,
-			Flags:   options.Flags,
+			Name:      options.AppName,
+			Version:   options.Version,
+			Usage:     options.Usage,
+			Flags:     options.Flags,
+			Writer:    options.Stdout,
+			ErrWriter: options.Stderr,
 		},
-		Args:       options.Args,
-		WebService: options.WebService,
-		Stdout:     options.Stdout,
-		Stderr:     options.Stderr,
+		WebServiceProvider: options.WebServiceProvider,
+		Args:               options.Args,
+		ExitOnError:        options.ExitOnError,
 	}
 	if err := cli.Init(); err != nil {
 		return nil, err
@@ -68,14 +67,14 @@ func New(options Options) (*Cli, error) {
 }
 
 // Init performs validation and when possible auto-populates absent fields with
-// the `os` package equivalent (e.g. if `cli.Stderr == nil` then it is set to
+// the `os` package equivalent (e.g. if `cli.App.Writer == nil` then it is set to
 // `os.Stderr`) or other default value.
 func (cli *Cli) Init() error {
 	if len(cli.App.Name) == 0 {
 		return AppNameRequiredError
 	}
-	if cli.WebService == nil {
-		return WebServiceRequiredError
+	if cli.WebServiceProvider == nil {
+		return WebServiceProviderRequiredError
 	}
 
 	// Don't change or check anything if already initialized.
@@ -95,11 +94,11 @@ func (cli *Cli) Init() error {
 	if cli.Args == nil {
 		cli.Args = os.Args
 	}
-	if cli.Stdout == nil {
-		cli.Stdout = os.Stdout
+	if cli.App.ErrWriter == nil {
+		cli.App.Writer = os.Stdout
 	}
-	if cli.Stderr == nil {
-		cli.Stderr = os.Stderr
+	if cli.App.ErrWriter == nil {
+		cli.App.ErrWriter = os.Stderr
 	}
 
 	// App flags and action.
@@ -176,21 +175,28 @@ func (cli *Cli) ServiceManagementHandler() error {
 }
 
 func (cli *Cli) RunWeb(ctx *cliv2.Context) error {
-	if cli.WebService == nil {
-		return WebServiceRequiredError
+	if cli.WebServiceProvider == nil {
+		return WebServiceProviderRequiredError
 	}
-	if err := cli.WebService.Start(ctx); err != nil {
+	webService, err := cli.WebServiceProvider(ctx)
+	if err != nil {
 		return err
 	}
-	fmt.Fprintf(cli.Stdout, "Successfully started web service on addr=%v\n", cli.WebService.Addr())
+	if webService == nil {
+		return NilWebServiceError
+	}
+	if err := webService.Start(); err != nil {
+		return err
+	}
+	fmt.Fprintf(cli.App.Writer, "Successfully started web service on addr=%v\n", webService.Addr())
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
 	<-sig // Wait for ^C signal.
-	fmt.Fprintln(cli.Stderr, "\nInterrupt signal detected, shutting down..")
+	fmt.Fprintln(cli.App.ErrWriter, "\nInterrupt signal detected, shutting down..")
 
-	if err := cli.WebService.Stop(); err != nil {
+	if err := webService.Stop(); err != nil {
 		return err
 	}
 
@@ -198,12 +204,26 @@ func (cli *Cli) RunWeb(ctx *cliv2.Context) error {
 }
 
 func (cli *Cli) errorExit(err error, statusCode int) {
-	fmt.Fprintf(cli.Stderr, "error: %s\n", err)
-	fmt.Fprintf(cli.Stderr, "exiting with status-code=%v\n", statusCode)
+	fmt.Fprintf(cli.App.ErrWriter, "error: %s\n", err)
+	fmt.Fprintf(cli.App.ErrWriter, "exiting with status-code=%v\n", statusCode)
 	os.Exit(statusCode)
 }
 
 func (cli *Cli) Main() error {
+	// Temporarily disable cliv2 os exiter and redirect ErrWriter to the one for
+	// this app.
+	var (
+		backupOsExiter  = cliv2.OsExiter
+		backupErrWriter = cliv2.ErrWriter
+	)
+	cliv2.OsExiter = func(_ int) {}
+	cliv2.ErrWriter = cli.App.ErrWriter
+	defer func() {
+		// Restore backed up values.
+		cliv2.OsExiter = backupOsExiter
+		cliv2.ErrWriter = backupErrWriter
+	}()
+
 	if err := cli.App.Run(cli.Args); err != nil {
 		if cli.ExitOnError {
 			cli.errorExit(err, 1)

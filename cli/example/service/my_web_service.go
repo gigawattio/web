@@ -3,18 +3,27 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gigawattio/go-commons/pkg/web"
 	"github.com/gigawattio/go-commons/pkg/web/route"
-
-	cliv2 "gopkg.in/urfave/cli.v2"
 )
 
 type MyWebService struct {
 	*web.WebServer
 }
 
-func (mws *MyWebService) handler() http.Handler {
+func New(bind string) *MyWebService {
+	service := &MyWebService{}
+	options := web.WebServerOptions{
+		Addr:    bind,
+		Handler: service.activateRoutes(),
+	}
+	service.WebServer = web.NewWebServer(options)
+	return service
+}
+
+func (mws *MyWebService) activateRoutes() http.Handler {
 	h := route.Activate(
 		[]route.RouteMiddlewareBundle{
 			route.RouteMiddlewareBundle{
@@ -29,23 +38,9 @@ func (mws *MyWebService) handler() http.Handler {
 	return h
 }
 
-func (mws *MyWebService) Start(ctx *cliv2.Context) error {
-	if mws.WebServer == nil {
-		options := web.WebServerOptions{
-			Addr:    ctx.String("bind"),
-			Handler: mws.handler(),
-		}
-		mws.WebServer = web.NewWebServer(options)
-	}
-	if err := mws.WebServer.Start(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (mws *MyWebService) Stop() error {
-	if err := mws.WebServer.Stop(); err != nil {
-		return err
-	}
-	return nil
+func (service *MyWebService) LoggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Fprintf(os.Stderr, "method=%s url=%s remoteAddr=%s referer=%s\n", req.Method, req.URL.String(), req.RemoteAddr, req.Referer())
+		next.ServeHTTP(w, req)
+	})
 }

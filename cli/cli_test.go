@@ -1,34 +1,46 @@
 package cli
 
 import (
-	// "bytes"
+	"bytes"
 	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/gigawattio/go-commons/pkg/errorlib"
 	"github.com/gigawattio/go-commons/pkg/testlib"
 	service "github.com/gigawattio/go-commons/pkg/web/cli/example/service"
+	"github.com/gigawattio/go-commons/pkg/web/interfaces"
 
 	"github.com/parnurzeal/gorequest"
 	cliv2 "gopkg.in/urfave/cli.v2"
 )
 
+func simpleWebServiceProvider(ctx *cliv2.Context) (interfaces.WebService, error) {
+	return service.New(ctx.String("bind")), nil
+}
+
 func TestCli(t *testing.T) {
 	options := Options{
-		AppName:    testlib.CurrentRunningTest(),
-		WebService: &service.MyWebService{},
-		Args:       []string{"-b", "127.0.0.1:0"},
+		AppName:            testlib.CurrentRunningTest(),
+		WebServiceProvider: simpleWebServiceProvider,
+		Args:               []string{"-b", "127.0.0.1:0"},
 	}
 	cli, err := New(options)
 	if err != nil {
 		t.Fatal(err)
 	}
 	cli.App.Action = func(ctx *cliv2.Context) error {
-		if err := options.WebService.Start(ctx); err != nil {
+		webService, err := options.WebServiceProvider(ctx)
+		if err != nil {
+			return err
+		}
+		if err := webService.Start(); err != nil {
 			t.Fatal(err)
 		}
-		resp, body, errs := gorequest.New().Get(fmt.Sprintf("http://%s/", cli.WebService.Addr())).End()
+		resp, body, errs := gorequest.New().Get(fmt.Sprintf("http://%s/", webService.Addr())).End()
 		if err := errorlib.Merge(errs); err != nil {
 			t.Error(err)
 		}
@@ -37,6 +49,9 @@ func TestCli(t *testing.T) {
 		}
 		if expected := "hello world"; body != expected {
 			t.Errorf("Expected response body=%q but actual=%q", expected, body)
+		}
+		if err := webService.Stop(); err != nil {
+			t.Error(err)
 		}
 		return nil
 	}
@@ -47,8 +62,8 @@ func TestCli(t *testing.T) {
 
 func TestCliAppNameError(t *testing.T) {
 	options := Options{
-		WebService: &service.MyWebService{},
-		Args:       []string{"-b", "127.0.0.1:0"},
+		WebServiceProvider: simpleWebServiceProvider,
+		Args:               []string{"-b", "127.0.0.1:0"},
 	}
 	_, err := New(options)
 	if expected := AppNameRequiredError; err != expected {
@@ -56,13 +71,93 @@ func TestCliAppNameError(t *testing.T) {
 	}
 }
 
-func TestCliWebServiceError(t *testing.T) {
+func TestCliWebServiceProviderError(t *testing.T) {
 	options := Options{
 		AppName: testlib.CurrentRunningTest(),
 		Args:    []string{"-b", "127.0.0.1:0"},
 	}
 	_, err := New(options)
-	if expected := WebServiceRequiredError; err != expected {
+	if expected := WebServiceProviderRequiredError; err != expected {
 		t.Fatalf("Expected error=%v but actual=%s", expected, err)
+	}
+}
+
+func brokenWebServiceProvider(ctx *cliv2.Context) (interfaces.WebService, error) {
+	return nil, nil
+}
+
+func TestCliBrokenWebServiceProvider(t *testing.T) {
+	var (
+		fakeStderr = &bytes.Buffer{}
+		options    = Options{
+			AppName:            testlib.CurrentRunningTest(),
+			Usage:              "Fully automatic :)",
+			Version:            "1024.2048.4096",
+			Args:               []string{"-b", "127.0.0.1:0"},
+			WebServiceProvider: brokenWebServiceProvider,
+			Stderr:             fakeStderr,      // Suppress os.Stderr output.
+			Stdout:             &bytes.Buffer{}, // Suppress os.Stderr output.
+			ExitOnError:        false,
+		}
+	)
+	c, err := New(options)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ch := make(chan error, 2)
+	go func() { ch <- c.Main() }()
+	select {
+	case actual := <-ch:
+		if expected := NilWebServiceError; actual != expected {
+			t.Errorf("Expected error=%v but actual=%s", expected, actual)
+		}
+		if expected, actual := NilWebServiceError.Error(), strings.Trim(fakeStderr.String(), "\n\t "); actual != expected {
+			t.Errorf("Expected stderr to contain value=%q but actual=%q", expected, actual)
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("Timed out after 100ms waiting for expected error")
+	}
+}
+
+func TestCliOutputDefaults(t *testing.T) {
+	options := Options{
+		AppName:            testlib.CurrentRunningTest(),
+		Args:               []string{"-b", "127.0.0.1:0"},
+		WebServiceProvider: simpleWebServiceProvider,
+	}
+	c, err := New(options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.App.Writer != os.Stdout {
+		t.Errorf("Expected c.App.Writer == os.Stdout but it was set to something else instead; actual value=%T/%p", c.App.Writer, c.App.Writer)
+	}
+	if c.App.ErrWriter != os.Stderr {
+		t.Errorf("Expected c.App.ErrWriter == os.Stderr but it was set to something else instead; actual value=%T/%p", c.App.ErrWriter, c.App.ErrWriter)
+	}
+}
+
+func TestCliOutputOverrides(t *testing.T) {
+	var (
+		fakeStdout = &bytes.Buffer{}
+		fakeStderr = &bytes.Buffer{}
+		options    = Options{
+			AppName:            testlib.CurrentRunningTest(),
+			Args:               []string{"-b", "127.0.0.1:0"},
+			WebServiceProvider: simpleWebServiceProvider,
+			Stdout:             fakeStdout,
+			Stderr:             fakeStderr,
+		}
+	)
+	c, err := New(options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.App.Writer != fakeStdout {
+		t.Errorf("Expected c.App.Writer == fakeStdout (*bytes.Buffer) but it was set to something else instead; actual value=%T/%p", c.App.Writer, c.App.Writer)
+	}
+	if c.App.ErrWriter != fakeStderr {
+		t.Errorf("Expected c.App.ErrWriter == fakeStderr (*bytes.Buffer) but it was set to something else instead; actual value=%T/%p", c.App.ErrWriter, c.App.ErrWriter)
 	}
 }

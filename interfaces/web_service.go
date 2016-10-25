@@ -7,7 +7,9 @@ import (
 )
 
 type WebService interface {
-	Start(ctx *cliv2.Context) error
+	Start() error
 	Stop() error
 	Addr() net.Addr
 }
+
+type WebServiceProvider func(ctx *cliv2.Context) (WebService, error)
