@@ -22,11 +22,19 @@ func simpleWebServiceProvider(ctx *cliv2.Context) (interfaces.WebService, error)
 	return service.New(ctx.String("bind")), nil
 }
 
+// genTestCliArgs prepends the current running tests name to the slice (in lieu
+// of the binary filename) to form a slice whose contents mimic realistic
+// command-line arguments.
+func genTestCliArgs(args ...string) []string {
+	args = append([]string{testlib.CurrentRunningTest()}, args...)
+	return args
+}
+
 func TestCli(t *testing.T) {
 	options := Options{
 		AppName:            testlib.CurrentRunningTest(),
 		WebServiceProvider: simpleWebServiceProvider,
-		Args:               []string{"-b", "127.0.0.1:0"},
+		Args:               genTestCliArgs("--bind", "127.0.0.1:0"),
 	}
 	cli, err := New(options)
 	if err != nil {
@@ -63,7 +71,7 @@ func TestCli(t *testing.T) {
 func TestCliAppNameError(t *testing.T) {
 	options := Options{
 		WebServiceProvider: simpleWebServiceProvider,
-		Args:               []string{"-b", "127.0.0.1:0"},
+		Args:               genTestCliArgs("-b", "127.0.0.1:0"),
 	}
 	_, err := New(options)
 	if expected := AppNameRequiredError; err != expected {
@@ -74,7 +82,7 @@ func TestCliAppNameError(t *testing.T) {
 func TestCliWebServiceProviderError(t *testing.T) {
 	options := Options{
 		AppName: testlib.CurrentRunningTest(),
-		Args:    []string{"-b", "127.0.0.1:0"},
+		Args:    genTestCliArgs("-b", "127.0.0.1:0"),
 	}
 	_, err := New(options)
 	if expected := WebServiceProviderRequiredError; err != expected {
@@ -93,7 +101,7 @@ func TestCliBrokenWebServiceProvider(t *testing.T) {
 			AppName:            testlib.CurrentRunningTest(),
 			Usage:              "Fully automatic :)",
 			Version:            "1024.2048.4096",
-			Args:               []string{"-b", "127.0.0.1:0"},
+			Args:               genTestCliArgs("-b", "127.0.0.1:0"),
 			WebServiceProvider: brokenWebServiceProvider,
 			Stderr:             fakeStderr,      // Suppress os.Stderr output.
 			Stdout:             &bytes.Buffer{}, // Suppress os.Stderr output.
@@ -123,7 +131,7 @@ func TestCliBrokenWebServiceProvider(t *testing.T) {
 func TestCliOutputDefaults(t *testing.T) {
 	options := Options{
 		AppName:            testlib.CurrentRunningTest(),
-		Args:               []string{"-b", "127.0.0.1:0"},
+		Args:               genTestCliArgs("-b", "127.0.0.1:0"),
 		WebServiceProvider: simpleWebServiceProvider,
 	}
 	c, err := New(options)
@@ -144,7 +152,7 @@ func TestCliOutputOverrides(t *testing.T) {
 		fakeStderr = &bytes.Buffer{}
 		options    = Options{
 			AppName:            testlib.CurrentRunningTest(),
-			Args:               []string{"-b", "127.0.0.1:0"},
+			Args:               genTestCliArgs("-b", "127.0.0.1:0"),
 			WebServiceProvider: simpleWebServiceProvider,
 			Stdout:             fakeStdout,
 			Stderr:             fakeStderr,
