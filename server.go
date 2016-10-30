@@ -2,13 +2,10 @@ package web
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	golog "log"
 	"net"
 	"net/http"
-	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,14 +15,8 @@ import (
 )
 
 const (
-	listenerStoppedMessage = "listener stopped"
 	MaxStopChecks          = 10
-)
-
-var (
-	ListenerAlreadyInUseError = errors.New("listener already in use")
-	NilServerError            = errors.New("server not in use")
-	NotStoppedError           = fmt.Errorf("server failed to stop, port is still open after %v checks", MaxStopChecks)
+	listenerStoppedMessage = "listener stopped"
 )
 
 type WebServerOptions struct {
@@ -42,7 +33,7 @@ type WebServer struct {
 	Options  WebServerOptions
 	server   *http.Server
 	listener *stoppableListener.StoppableListener
-	lock     sync.Mutex
+	lock     sync.RWMutex
 }
 
 type StaticHttpHandler struct {
@@ -73,10 +64,7 @@ func (ws *WebServer) Start() error {
 	ws.lock.Lock()
 	defer ws.lock.Unlock()
 
-	if ws.listener != nil {
-		return ListenerAlreadyInUseError
-	}
-	if ws.server != nil {
+	if ws.server != nil || ws.listener != nil {
 		return errorlib.AlreadyRunningError
 	}
 	rawListener, err := net.Listen("tcp", ws.Options.Addr)
@@ -97,7 +85,7 @@ func (ws *WebServer) Start() error {
 		ErrorLog:       ws.Options.ErrorLog,
 	}
 	go func() {
-		if err := ws.server.Serve(ws.listener); err != nil && err.Error() != listenerStoppedMessage {
+		if err := ws.server.Serve(ws.listener); err != nil && err != stoppableListener.StoppedError {
 			log.Infof("web.WebServer: error on ws with Options=%+v: %s", ws.Options, err)
 		}
 		// log.Info("Server done!")
@@ -110,48 +98,27 @@ func (ws *WebServer) Stop() error {
 	ws.lock.Lock()
 	defer ws.lock.Unlock()
 
-	if ws.server == nil {
+	if ws.server == nil || ws.listener == nil {
 		return errorlib.NotRunningError
 	}
-	if ws.listener == nil {
-		return ListenerAlreadyInUseError
-	}
-	ws.listener.Stop()
-	time.Sleep(50 * time.Millisecond)
-	if err := ws.waitUntilStopped(); err != nil {
+	if err := ws.listener.StopSafely(); err != nil {
 		return err
 	}
-	time.Sleep(50 * time.Millisecond)
-	ws.listener = nil
 	ws.server = nil
+	ws.listener = nil
 	return nil
 }
 
 // Addr exposes the listener address.
 func (ws *WebServer) Addr() net.Addr {
-	ws.lock.Lock()
-	defer ws.lock.Unlock()
+	ws.lock.RLock()
+	defer ws.lock.RUnlock()
 
 	if ws.listener == nil {
 		return &net.IPAddr{}
 	}
 	addr := ws.listener.Addr()
 	return addr
-}
-
-// waitUntilStopped uses netcat (nc) to determine if the listening port is
-// still accepting connections.  Returns nil when connections are no longer
-// being accepted, or returns NotStoppedError if MaxStopChecks are exceeded.
-func (ws *WebServer) waitUntilStopped() error {
-	args := append([]string{"-v", "-w", "1"}, strings.Split(ws.Options.Addr, ":")...)
-	for i := 0; i < MaxStopChecks; i++ {
-		/*out*/ _, err := exec.Command("nc", args...).CombinedOutput()
-		if err != nil { // If `nc` exits with non-zero status code then that means the port is closed.
-			return nil
-		}
-		/*log.Printf("waitUntilStopped nc output=%s\n", string(out))*/
-	}
-	return NotStoppedError
 }
 
 // BaseUrl provides a working URL base path to the web server instance.
