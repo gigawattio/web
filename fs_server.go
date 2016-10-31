@@ -48,7 +48,7 @@ func (fsServer *FsServer) Start() error {
 	}
 	fsServer.listener = sl
 	go func() {
-		if err := fsServer.server.Serve(sl); err != nil && err.Error() != listenerStoppedMessage {
+		if err := fsServer.server.Serve(sl); err != nil && err != stoppableListener.StoppedError {
 			log.Errorf("unexpected error from FsServer.server.Serve(sl): %s", err)
 		}
 	}()

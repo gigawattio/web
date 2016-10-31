@@ -14,10 +14,7 @@ import (
 	"github.com/jaytaylor/stoppableListener"
 )
 
-const (
-	MaxStopChecks          = 10
-	listenerStoppedMessage = "listener stopped"
-)
+const MaxStopChecks = 10
 
 type WebServerOptions struct {
 	Addr           string        // TCP address to listen on, ":http" if empty.
