@@ -25,7 +25,7 @@ func stopper(server *WebServer, t *testing.T) {
 	// t.Logf("%s\n", string(o))
 }
 
-func Test_StaticWebServer1(t *testing.T) {
+func TestStaticWebServer1(t *testing.T) {
 	content := []byte("<!DOCTYPE html><html><head><title>Test page</title></head><body>hi, this is a test page.</body></html>")
 	contentType := "text/html"
 	server := NewStaticWebServer(WebServerOptions{Addr: testAddr}, content, http.StatusOK, map[string]string{"Content-Type": contentType})
@@ -58,7 +58,7 @@ func Test_StaticWebServer1(t *testing.T) {
 
 // Test_StaticWebServer2 ensures that webservers can successfully be brought up
 // and down and up on the same address.
-func Test_StaticWebServer2(t *testing.T) {
+func TestStaticWebServer2(t *testing.T) {
 	content := []byte(`{"a":"json-document"}`)
 	contentType := "application/json"
 	server := NewStaticWebServer(WebServerOptions{Addr: testAddr}, content, http.StatusOK, map[string]string{"Content-Type": contentType})
@@ -93,7 +93,7 @@ func Test_StaticWebServer2(t *testing.T) {
 	}
 }
 
-func Test_BaseUrl(t *testing.T) {
+func TestBaseUrl(t *testing.T) {
 	server := NewWebServer(WebServerOptions{Addr: testAddr})
 	if expected, actual := fmt.Sprintf("http://%v", server.Addr()), server.BaseUrl(); actual != expected {
 		t.Errorf(`Expected BaseUrl="%s" but instead found "%s"`, expected, actual)
