@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/gigawattio/go-commons/pkg/web/cli"
-	"github.com/gigawattio/go-commons/pkg/web/cli/example/service"
-	"github.com/gigawattio/go-commons/pkg/web/interfaces"
+	"github.com/gigawattio/web/cli"
+	"github.com/gigawattio/web/cli/example/service"
+	"github.com/gigawattio/web/interfaces"
 
 	cliv2 "gopkg.in/urfave/cli.v2"
 )

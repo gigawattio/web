@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gigawattio/go-commons/pkg/oslib"
+	"github.com/gigawattio/oslib"
 )
 
 // AssetProvider defines the function signature for a StaticFilesMiddleware

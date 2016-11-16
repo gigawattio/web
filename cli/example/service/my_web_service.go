@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gigawattio/go-commons/pkg/web"
-	"github.com/gigawattio/go-commons/pkg/web/route"
+	"github.com/gigawattio/web"
+	"github.com/gigawattio/web/route"
 )
 
 type MyWebService struct {

@@ -6,9 +6,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stack"
-	"github.com/gigawattio/go-commons/pkg/errorlib"
-	"github.com/gigawattio/go-commons/pkg/web"
-	"github.com/gigawattio/go-commons/pkg/web/helper"
+	"github.com/gigawattio/errorlib"
+	"github.com/gigawattio/web"
+	"github.com/gigawattio/web/helper"
 )
 
 var requestAlreadyHandledError = errors.New("already handled")

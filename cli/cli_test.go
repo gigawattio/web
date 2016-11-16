@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gigawattio/go-commons/pkg/errorlib"
-	"github.com/gigawattio/go-commons/pkg/testlib"
-	service "github.com/gigawattio/go-commons/pkg/web/cli/example/service"
-	"github.com/gigawattio/go-commons/pkg/web/interfaces"
+	"github.com/gigawattio/errorlib"
+	"github.com/gigawattio/testlib"
+	service "github.com/gigawattio/web/cli/example/service"
+	"github.com/gigawattio/web/interfaces"
 
 	"github.com/parnurzeal/gorequest"
 	cliv2 "gopkg.in/urfave/cli.v2"

@@ -9,8 +9,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/gigawattio/go-commons/pkg/upstart"
-	"github.com/gigawattio/go-commons/pkg/web/interfaces"
+	"github.com/gigawattio/upstart"
+	"github.com/gigawattio/web/interfaces"
 
 	cliv2 "gopkg.in/urfave/cli.v2"
 )

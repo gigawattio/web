@@ -10,7 +10,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gigawattio/go-commons/pkg/errorlib"
+	"github.com/gigawattio/errorlib"
 	"github.com/jaytaylor/stoppableListener"
 )
 
