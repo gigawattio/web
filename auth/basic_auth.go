@@ -51,35 +51,44 @@ func (b basicAuth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	b.h.ServeHTTP(w, r)
 }
 
-// authenticate retrieves and then validates the user:password combination provided in
-// the request header. Returns 'false' if the user has not successfully authenticated.
-func (b *basicAuth) authenticate(r *http.Request) bool {
-	const basicScheme string = "Basic "
+const basicScheme string = "Basic "
 
+func ParseCredentials(r *http.Request) (creds [][]byte, ok bool) {
 	// Confirm the request is sending Basic Authentication credentials.
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, basicScheme) {
-		return false
+		return
 	}
 
 	// Get the plain-text username and password from the request
 	// The first six characters are skipped - e.g. "Basic ".
 	str, err := base64.StdEncoding.DecodeString(auth[len(basicScheme):])
 	if err != nil {
-		return false
+		return
 	}
 
 	// Split on the first ":" character only, with any subsequent colons assumed to be part
 	// of the password. Note that the RFC2617 standard does not place any limitations on
 	// allowable characters in the password.
-	creds := bytes.SplitN(str, []byte(":"), 2)
+	creds = bytes.SplitN(str, []byte(":"), 2)
 
 	if len(creds) != 2 {
+		return
+	}
+	ok = true
+	return
+}
+
+// authenticate retrieves and then validates the user:password combination provided in
+// the request header. Returns 'false' if the user has not successfully authenticated.
+func (b *basicAuth) authenticate(r *http.Request) bool {
+	creds, ok := ParseCredentials(r)
+	if !ok {
 		return false
 	}
 
 	// Equalize lengths of supplied and required credentials
-	// by hashing them
+	// by hashing them.
 	givenUser := sha256.Sum256(creds[0])
 	givenPass := sha256.Sum256(creds[1])
 	if b.opts.AuthFunc != nil {
@@ -90,7 +99,7 @@ func (b *basicAuth) authenticate(r *http.Request) bool {
 	requiredUser := sha256.Sum256([]byte(b.opts.User))
 	requiredPass := sha256.Sum256([]byte(b.opts.Password))
 
-	// Compare the supplied credentials to those set in our options
+	// Compare the supplied credentials to those set in our options.
 	if subtle.ConstantTimeCompare(givenUser[:], requiredUser[:]) == 1 &&
 		subtle.ConstantTimeCompare(givenPass[:], requiredPass[:]) == 1 {
 		return true
