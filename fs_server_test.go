@@ -27,7 +27,7 @@ func TestFsServerRestarts(t *testing.T) {
 	fsServer := NewFsServer("127.0.0.1:0", ".")
 	for i, _ := range [10]struct{}{} {
 		if err := fsServer.Start(); err != nil {
-			t.Fatalf("i=%v; Error starting: %s", err)
+			t.Fatalf("i=%v; Error starting: %s", i, err)
 		}
 		response, err := http.Get(fmt.Sprintf("http://%s/", fsServer.Addr()))
 		if err != nil {
@@ -37,7 +37,7 @@ func TestFsServerRestarts(t *testing.T) {
 			t.Errorf("i=%v; Expected response status-code=%v but actual=%v", i, expected, actual)
 		}
 		if err := fsServer.Stop(); err != nil {
-			t.Fatalf("i=%v; Error stopping: %s", err)
+			t.Fatalf("i=%v; Error stopping: %s", i, err)
 		}
 	}
 }
