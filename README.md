@@ -10,7 +10,7 @@ Go (golang) package which includes utility methods and helpers for creating web 
 
 I highly recommend checking out the `web/cli` package [README](cli/README.md).  You can use this to super easily and conveniently create some sweet and extensible command-line web server applications!
 
-Created by [Jay Taylor](http://jaytaylor.com/) and used by [Gigawatt](http://gigawatt.io/).
+Created by [Jay Taylor](https://jaytaylor.com/) and used by [Gigawatt](https://gigawatt.io/).
 
 ### Requirements
 
