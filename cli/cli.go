@@ -222,6 +222,7 @@ func (cli *Cli) Main() error {
 		if cli.ExitOnError {
 			ErrorExit(cli.App.ErrWriter, err, 1)
 		} else {
+			fmt.Fprintln(cli.App.ErrWriter, err.Error())
 			return err
 		}
 	}

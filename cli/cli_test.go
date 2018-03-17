@@ -165,7 +165,7 @@ func TestCliBrokenWebServiceProvider(t *testing.T) {
 			Args:               genTestCliArgs("-b", "127.0.0.1:0"),
 			WebServiceProvider: brokenWebServiceProvider,
 			Stderr:             fakeStderr,      // Suppress os.Stderr output.
-			Stdout:             &bytes.Buffer{}, // Suppress os.Stderr output.
+			Stdout:             &bytes.Buffer{}, // Suppress os.Stdout output.
 			ExitOnError:        false,
 		}
 	)
