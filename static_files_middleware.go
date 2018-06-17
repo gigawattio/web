@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gigawattio/oslib"
+	log "github.com/sirupsen/logrus"
 )
 
 // AssetProvider defines the function signature for a StaticFilesMiddleware

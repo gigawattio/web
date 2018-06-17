@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/nbio/hitch"
+	log "github.com/sirupsen/logrus"
 )
 
 // ContextParam is a shortcut to get param values encoded in the url path.

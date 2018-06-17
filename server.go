@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gigawattio/errorlib"
 	"github.com/jaytaylor/stoppableListener"
+	log "github.com/sirupsen/logrus"
 )
 
 const MaxStopChecks = 10

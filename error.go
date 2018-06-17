@@ -3,8 +3,8 @@ package web
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stack"
+	log "github.com/sirupsen/logrus"
 )
 
 func JsonError(detail interface{}) Json {

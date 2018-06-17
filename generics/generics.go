@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stack"
 	"github.com/gigawattio/errorlib"
 	"github.com/gigawattio/web"
 	"github.com/gigawattio/web/helper"
+	log "github.com/sirupsen/logrus"
 )
 
 var requestAlreadyHandledError = errors.New("already handled")

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gigawattio/errorlib"
 	"github.com/jaytaylor/stoppableListener"
+	log "github.com/sirupsen/logrus"
 )
 
 // FsServer is a filesystem server.

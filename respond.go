@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // TODO(jet) Add some form of logging control or toggle to this package,

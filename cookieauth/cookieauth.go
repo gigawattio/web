@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/securecookie"
+	log "github.com/sirupsen/logrus"
 )
 
 // CookieAuth provides secure pure cookie-based authentication capabilities to

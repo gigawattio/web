@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/nbio/hitch"
+	log "github.com/sirupsen/logrus"
 )
 
 // RouteMiddlewareBundle is the struct which represents a group of
