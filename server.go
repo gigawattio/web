@@ -56,6 +56,12 @@ func NewStaticWebServer(options WebServerOptions, content []byte, statusCode int
 	return ws
 }
 
+func (ws *WebServer) Listener() net.Listener {
+	ws.lock.Lock()
+	defer ws.lock.Unlock()
+	return ws.listener
+}
+
 // Start starts up the WebServer.
 func (ws *WebServer) Start() error {
 	ws.lock.Lock()
