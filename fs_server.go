@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/gigawattio/errorlib"
+	"gigawatt.io/errorlib"
 	"github.com/jaytaylor/stoppableListener"
 	log "github.com/sirupsen/logrus"
 )

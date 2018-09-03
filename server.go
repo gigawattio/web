@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gigawattio/errorlib"
+	"gigawatt.io/errorlib"
 	"github.com/jaytaylor/stoppableListener"
 	log "github.com/sirupsen/logrus"
 )
